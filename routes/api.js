@@ -616,7 +616,7 @@ router.get('/tools/hostinfo', async (req, res) => {
   if (info.limite <= 0) return res.json(resDefault.noLimit);
 
   try {
-    const { hostInfo } = require("../scrapers/domain-ip.js")
+    const { hostInfo } = require("../scrapers/domainip.js")
     const ress = await hostInfo(domain);
     useKey(apikey, info.tipo);
     return res.json(ress);
