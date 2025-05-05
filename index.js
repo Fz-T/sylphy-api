@@ -27,7 +27,7 @@ app.use('/assets', express.static(path.join(__dirname, 'views', 'assets')))
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(session({
-  secret: 'ichika-secret',
+  secret: 'sylph-secret',
   resave: false,
   saveUninitialized: true,
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
@@ -108,17 +108,30 @@ app.get('/logout', (req, res) => {
 })
 
 const webhookSecret = 'SylphyetteUwUs';
+app.use('/webhook', (req, res, next) => {
+  let data = '';
+  req.on('data', chunk => data += chunk);
+  req.on('end', () => {
+    req.rawBody = data;
+    try {
+      req.body = JSON.parse(data);
+    } catch (err) {
+      return res.status(400).send('Payload inválido');
+    }
+    next();
+  });
+});
+const webhookSecret = 'SylphyetteUwUs';
 app.post('/webhook', (req, res) => {
-  const payload = req.body;
   const sig = req.headers['x-hub-signature-256'];
-
   const hmac = crypto.createHmac('sha256', webhookSecret);
-  const digest = 'sha256=' + hmac.update(JSON.stringify(payload)).digest('hex');
+  const digest = 'sha256=' + hmac.update(req.rawBody).digest('hex');
 
   if (sig !== digest) {
     console.log('Firma no válida');
     return res.status(403).send('Firma no válida');
   }
+
   console.log('Webhook recibido, actualizando el repositorio...');
   exec('cd /root/sylphy-api && git pull && pm2 restart index.js', (err, stdout, stderr) => {
     if (err) {
