@@ -107,7 +107,6 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/users/login'))
 })
 
-const webhookSecret = 'SylphyetteUwUs';
 app.use('/webhook', (req, res, next) => {
   let data = '';
   req.on('data', chunk => data += chunk);
