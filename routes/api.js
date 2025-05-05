@@ -603,4 +603,27 @@ router.get('/tools/lyrics', async (req, res) => {
   }
 });
 
+router.get('/tools/hostinfo', async (req, res) => {
+  const apikey = req.query.apikey;
+  const domain = req.query.domain;
+
+  if (!apikey) return res.json(resDefault.invalidKey);
+  if (!domain) return res.json({ status: false, creador, mensaje: 'Falta el parámetro q' });
+
+  const info = validateKey(apikey);
+  if (!info) return res.json(resDefault.invalidKey);
+
+  if (info.limite <= 0) return res.json(resDefault.noLimit);
+
+  try {
+    const { hostInfo } = require("../scrapers/domain-ip.js")
+    const ress = await hostInfo(domain);
+    useKey(apikey, info.tipo);
+    return res.json(ress);
+  } catch (e) {
+    console.error(e);
+    return res.json(resDefault.error);
+  }
+});    
+
 module.exports = router;
