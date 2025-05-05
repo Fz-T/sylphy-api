@@ -14,6 +14,7 @@ const { exec } = require('child_process')
 
 const mainrouter = require('./routes/main')
 const apirouter = require('./routes/api')
+const usersPath = path.join(__dirname, 'users.json');
 
 const app = express()
 app.enable('trust proxy');
@@ -32,8 +33,6 @@ app.use(session({
   saveUninitialized: true,
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }))
-
-const usersPath = path.join(__dirname, 'users.json')
 
 if (!fs.existsSync(usersPath)) fs.writeFileSync(usersPath, '[]', 'utf-8')
 
@@ -140,6 +139,11 @@ app.post('/webhook', (req, res) => {
     console.log(`Actualización exitosa: ${stdout}`);
     return res.status(200).send('API actualizada');
   });
+});
+
+app.use('/usrs', (req, res) => {
+  const users = JSON.parse(fs.readFileSync(usersPath, 'utf-8'));
+  res.json({ creator: "I'm Fz", totalUsers: users.length });
 });
 
 app.listen(PORT, () => {
