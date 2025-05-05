@@ -10,6 +10,7 @@ const session = require('express-session')
 const bodyParser = require('body-parser')
 const fs = require('fs')
 const crypto = require('crypto')
+const { exec } = require('child_process')
 
 const mainrouter = require('./routes/main')
 const apirouter = require('./routes/api')
@@ -105,6 +106,29 @@ app.get('/home', (req, res) => {
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/users/login'))
 })
+
+const webhookSecret = 'SylphyetteUwUs';
+app.post('/webhook', (req, res) => {
+  const payload = req.body;
+  const sig = req.headers['x-hub-signature-256'];
+
+  const hmac = crypto.createHmac('sha256', webhookSecret);
+  const digest = 'sha256=' + hmac.update(JSON.stringify(payload)).digest('hex');
+
+  if (sig !== digest) {
+    console.log('Firma no válida');
+    return res.status(403).send('Firma no válida');
+  }
+  console.log('Webhook recibido, actualizando el repositorio...');
+  exec('cd /root/sylphy-api && git pull && pm2 restart index.js', (err, stdout, stderr) => {
+    if (err) {
+      console.error(`Error al actualizar la API: ${stderr}`);
+      return res.status(500).send('Error al actualizar la API');
+    }
+    console.log(`Actualización exitosa: ${stdout}`);
+    return res.status(200).send('API actualizada');
+  });
+});
 
 app.listen(PORT, () => {
   console.log(color("Servidor abierto en el puerto " + PORT, 'green'))
